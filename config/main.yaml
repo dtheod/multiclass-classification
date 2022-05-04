@@ -1,10 +1,10 @@
-defaults:
-  - process: process1
-  - model: model1
-  - _self_
+hydra:  
+  output_subdir: null  
+  run:  
+    dir: .
 
 raw: 
-  path: data/raw/sample.csv
+  path: data/raw/dataset.csv
 
 processed:
   dir: data/processed

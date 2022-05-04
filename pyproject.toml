@@ -5,17 +5,24 @@ description = ""
 authors = ["DT"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "3.8.12"
 dvc = "^2.10.0"
-hydra-core = "^1.1.1"
+hydra-core = "1.1.1"
 pdoc3 = "^0.10.0"
 notebook = "^6.4.10"
 pandas = "^1.4.2"
+scipy = "1.8.0"
+scikit-learn = "1.0.2"
+prefect = "1.2.0"
+dirty-cat = "^0.2.0"
+fuzzywuzzy = "^0.18.0"
+python-Levenshtein = "^0.12.2"
 
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
 pre-commit = "^2.17.0"
+plotly = "^5.7.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
