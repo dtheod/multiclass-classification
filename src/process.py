@@ -101,11 +101,11 @@ def assignee_fix(df:pd.DataFrame) -> pd.DataFrame:
 def final_selection(df:pd.DataFrame) -> pd.DataFrame:
     df = (
         df
-        .filter(['creation_date', 'component_name', 'product_name', 'resolution_category',
+        .filter(['creation_date', 'component_name', 'product_name',
                 'resolution_code', 'status_code', 'update_date', 'quantity_of_votes',
                 'quantity_of_comments', 'bug_fix_time', 'severity_code',
                 'assignee_name_fixed'])
-        .rename(columns = {'assignee_name':'assignee_name_fixed'})
+        .rename(columns = {'assignee_name_fixed':'assignee_name'})
         
     )
     return df
