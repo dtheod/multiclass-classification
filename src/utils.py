@@ -1,6 +1,22 @@
 import pandas as pd
 import numpy as np
 
+import mlflow
+from dagshub import DAGsHubLogger
+
+
+class BaseLogger:
+    def __init__(self):
+        self.logger = DAGsHubLogger()
+
+    def log_metrics(self, metrics: dict):
+        mlflow.log_metrics(metrics)
+        self.logger.log_metrics(metrics)
+
+    def log_params(self, params: dict):
+        mlflow.log_params(params)
+        self.logger.log_hyperparams(params)
+
 
 def component_func(row):
     if row.startswith('tptp'):
@@ -27,6 +43,8 @@ def component_func(row):
         return "ecf"
     elif row.startswith('jst'):
         return "jst"
+    elif row.startswith('xtest'):
+        return "xtest"
     elif row.startswith('tptp'):
         return "tptp"
     elif row.startswith('cdo'):
