@@ -8,10 +8,13 @@ raw:
 
 processed:
   dir: data/processed
-  name: processed.csv
+  name: final_selection.csv
   path: ${processed.dir}/${processed.name}
 
-final:
-  dir: data/final
-  name: final.csv
-  path: ${final.dir}/${final.name}
+model_input:
+  dir: data/features_data
+  name: model_input.csv
+  path: ${model_input.dir}/${model_input.name}
+
+parameters:
+  var_thres: 0.005
