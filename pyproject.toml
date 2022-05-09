@@ -25,6 +25,8 @@ dagshub = "^0.1.8"
 pre-commit = "^2.18.1"
 xgboost = "^1.6.0"
 hyperopt = "^0.2.7"
+fastapi = "^0.76.0"
+uvicorn = "^0.17.6"
 
 
 [tool.poetry.dev-dependencies]

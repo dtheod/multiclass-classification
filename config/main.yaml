@@ -3,6 +3,10 @@ hydra:
   run:  
     dir: .
 
+defaults:
+  - model: model
+  - _self_
+
 raw: 
   path: data/raw/dataset.csv
 
@@ -18,3 +22,37 @@ model_input:
 
 parameters:
   var_thres: 0.005
+
+model:
+  dir: models
+  name: XGBoost
+  path: ${model.dir}/${model.name}
+
+pca:
+  dir: models
+  name: pca
+  path: ${pca.dir}/${pca.name}
+
+encoder:
+  dir: models
+  name: one_hot
+  path: ${encoder.dir}/${encoder.name}
+
+variance:
+  dir: models
+  name: vars
+  path: ${variance.dir}/${variance.name}
+
+feats:
+  dir: models
+  name: feat
+  path: ${feats.dir}/${feats.name}
+
+label_encoder:
+  dir: models
+  name: label_enc
+  path: ${label_encoder.dir}/${label_encoder.name}
+
+
+
+
