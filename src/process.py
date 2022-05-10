@@ -1,9 +1,7 @@
-
 import hydra
 import numpy as np
 import pandas as pd
 from fuzzywuzzy import fuzz
-# from hydra.utils import to_absolute_path as abspath
 from omegaconf import DictConfig
 from prefect import Flow, task
 from prefect.engine.results import LocalResult
@@ -133,7 +131,7 @@ def assignee_fix(df: pd.DataFrame) -> pd.DataFrame:
     map_dict = dict(
         zip(max_assignee.assignee_name, max_assignee.max_assignee_name)
     )
-    df["assignee_name_fixed"] = df["assignee_name"].apply(mapping)
+    df["assignee_name"] = df["assignee_name"].apply(mapping)
 
     return df
 
@@ -150,9 +148,9 @@ def final_selection(df: pd.DataFrame) -> pd.DataFrame:
             "quantity_of_comments",
             "bug_fix_time",
             "severity_code",
-            "assignee_name_fixed",
+            "assignee_name",
         ]
-    ).rename(columns={"assignee_name_fixed": "assignee_name"})
+    )
     return df
 
 

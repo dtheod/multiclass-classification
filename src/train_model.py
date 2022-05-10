@@ -1,55 +1,185 @@
 # from utils import BaseLogger
 import warnings
-from typing import Tuple
+from functools import partial
+from typing import Callable, Tuple
 
 import hydra
+import joblib
+import mlflow
+import mlflow.xgboost
 import pandas as pd
 from hydra.utils import to_absolute_path as abspath
+from hyperopt import STATUS_OK, Trials, fmin, hp, tpe
 from omegaconf import DictConfig
-from prefect import Flow, task
-from prefect.engine.results import LocalResult
-from prefect.engine.serializers import PandasSerializer
-from sklearn.model_selection import train_test_split
+from sklearn.metrics import balanced_accuracy_score
+from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.preprocessing import LabelEncoder
+from xgboost import XGBClassifier
 
 warnings.filterwarnings("ignore")
 
-FINAL_OUTPUT = LocalResult(
-    "data/final/",
-    location="{task_name}.csv",
-    serializer=PandasSerializer("csv", serialize_kwargs={"index": False}),
-)
 
-
-@task
 def load_features(path: str) -> pd.DataFrame:
     data = pd.read_csv(path, delimiter=",")
     return data
 
 
-@task
-def train_val_split(
-    df: pd.DataFrame,
+def stratified_split(
+    df_x: pd.DataFrame, df_y: pd.DataFrame
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
 
+    ss = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=0)
+    ss.get_n_splits(df_x, df_y)
+    for train_index, test_index in ss.split(df_x, df_y):
+        X_train, X_test = df_x.iloc[train_index], df_x.iloc[test_index]
+        y_train, y_test = df_y[train_index], df_y[test_index]
+    return X_train, X_test, y_train, y_test
+
+
+def label_encoding(
+    df: pd.DataFrame, l_enc_path: str
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    lb = LabelEncoder()
     X = df.drop("product_name", axis=1)
     y = df["product_name"]
-    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2)
-    # wandb.log({"table": X_val})
-    return X_train, X_val, y_train, y_val
+    lb.fit(y)
+    joblib.dump(lb, abspath(l_enc_path))
+    labels = lb.transform(y)
+    return X, labels
+
+
+def get_objective(
+    df_x_train: pd.DataFrame,
+    df_x_test: pd.DataFrame,
+    df_y_train: pd.DataFrame,
+    df_y_test: pd.DataFrame,
+    config: DictConfig,
+    space: dict,
+):
+
+    model = XGBClassifier(
+        objective=config.model.objective,
+        n_estimators=space["n_estimators"],
+        max_depth=int(space["max_depth"]),
+        gamma=space["gamma"],
+        reg_alpha=int(space["reg_alpha"]),
+        min_child_weight=int(space["min_child_weight"]),
+        colsample_bytree=int(space["colsample_bytree"]),
+    )
+
+    evaluation = [
+        (df_x_train.values, df_y_train),
+        (df_x_test.values, df_y_test),
+    ]
+
+    model.fit(
+        df_x_train.values,
+        df_y_train,
+        eval_set=evaluation,
+        eval_metric="mlogloss",
+        verbose=False,
+        early_stopping_rounds=1,
+    )
+
+    pred = model.predict(df_x_test)
+    acc = balanced_accuracy_score(df_y_test, pred)
+    print("SCORE:", acc)
+    return {"loss": acc, "status": STATUS_OK}
+
+
+def optimize(objective: Callable, space: dict):
+    trials = Trials()
+    best_hyper = fmin(
+        fn=objective,
+        space=space,
+        algo=tpe.suggest,
+        max_evals=1,
+        trials=trials,
+    )
+    print("The best hyperparameters are : ", "\n")
+    print(best_hyper)
+
+    best_model = XGBClassifier(
+        n_estimators=space["n_estimators"],
+        colsample_bytree=best_hyper["colsample_bytree"],
+        gamma=best_hyper["gamma"],
+        max_depth=int(best_hyper["max_depth"]),
+        min_child_weight=best_hyper["min_child_weight"],
+        reg_alpha=best_hyper["reg_alpha"],
+        reg_lambda=best_hyper["reg_lambda"],
+    )
+    return best_model
+
+
+def predict(model: XGBClassifier, X_test: pd.DataFrame):
+    return model.predict(X_test)
+
+
+def log_params(model: XGBClassifier, features: list):
+    mlflow.log_params({"model_class": type(model).__name__})
+    model_params = model.get_params()
+
+    for arg, value in model_params.items():
+        mlflow.log_params({arg: value})
+
+    mlflow.log_params({"features": features})
+
+
+def log_metrics(**metrics: dict):
+    mlflow.log_metrics(metrics)
 
 
 @hydra.main(config_path="../config", config_name="main")
 def train_model(config: DictConfig):
-    with Flow("train") as flow:
-        """Function to train the model"""
 
-        input_path = abspath(config.processed.path)
-        output_path = abspath(config.final.path)
+    with mlflow.start_run():
 
-        print(f"Train modeling using {input_path}")
-        print(f"Model used: {config.model.name}")
-        print(f"Save the output to {output_path}")
-    flow.run()
+        # Loading the model input data
+        model_input = load_features(abspath(config.model_input.path))
+
+        # Encode the label/target column from object to int
+        df_x, df_y = label_encoding(model_input, config.label_encoder.path)
+
+        # Stratified split
+        X_train, X_test, y_train, y_test = stratified_split(df_x, df_y)
+
+        # Modelling
+        space = {
+            "max_depth": hp.quniform("max_depth", **config.model.max_depth),
+            "gamma": hp.uniform("gamma", **config.model.gamma),
+            "reg_alpha": hp.quniform("reg_alpha", **config.model.reg_alpha),
+            "reg_lambda": hp.uniform("reg_lambda", **config.model.reg_lambda),
+            "colsample_bytree": hp.uniform(
+                "colsample_bytree", **config.model.colsample_bytree
+            ),
+            "min_child_weight": hp.quniform(
+                "min_child_weight", **config.model.min_child_weight
+            ),
+            "n_estimators": config.model.n_estimators,
+            "seed": config.model.seed,
+        }
+        objective = partial(
+            get_objective, X_train, X_test, y_train, y_test, config
+        )
+
+        # Find best model
+        best_model = optimize(objective, space)
+
+        # Fit the best model
+        best_model.fit(X_train.values, y_train)
+
+        # Predict
+        prediction = predict(best_model, X_test)
+
+        accuracy = balanced_accuracy_score(y_test, prediction)
+        print(f"Accuracy Score of this model is {accuracy}.")
+
+        # Log parameters and metrics
+        # mlflow.log_param(best_model, config.process.features)
+        # log_params(best_model, features = X_train.columns)
+        mlflow.log_metric("accuracy_score", accuracy)
+
+        joblib.dump(best_model, abspath(config.model.path))
 
 
 if __name__ == "__main__":
