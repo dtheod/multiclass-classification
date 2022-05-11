@@ -6,8 +6,8 @@ from urllib.parse import urlparse
 
 import hydra
 import joblib
-import mlflow
-import mlflow.xgboost
+#import #mlflow
+#import #mlflow.xgboost
 import pandas as pd
 from hydra.utils import to_absolute_path as abspath
 from hyperopt import STATUS_OK, Trials, fmin, hp, tpe
@@ -100,10 +100,10 @@ def optimize(objective: Callable, space: dict):
     print("The best hyperparameters are : ", "\n")
     print(best_hyper)
 
-    mlflow.log_param("max_depth", best_hyper["max_depth"])
-    mlflow.log_param("colsample_bytree", best_hyper["colsample_bytree"])
-    mlflow.log_param("gamma", best_hyper["gamma"])
-    mlflow.log_param("max_depth", best_hyper["max_depth"])
+    ##mlflow.log_param("max_depth", best_hyper["max_depth"])
+    ##mlflow.log_param("colsample_bytree", best_hyper["colsample_bytree"])
+    #mlflow.log_param("gamma", best_hyper["gamma"])
+    #mlflow.log_param("max_depth", best_hyper["max_depth"])
 
     best_model = XGBClassifier(
         n_estimators=space["n_estimators"],
@@ -124,76 +124,79 @@ def predict(model: XGBClassifier, X_test: pd.DataFrame):
 @hydra.main(config_path="../config", config_name="main")
 def train_model(config: DictConfig):
 
-    with mlflow.start_run():
+    #with #mlflow.start_run():
 
-        # Loading the model input data
-        model_input = load_features(abspath(config.model_input.path))
+    # Loading the model input data
+    model_input = load_features(abspath(config.model_input.path))
 
-        # Encode the label/target column from object to int
-        df_x, df_y = label_encoding(model_input, config.label_encoder.path)
+    # Encode the label/target column from object to int
+    df_x, df_y = label_encoding(model_input, config.label_encoder.path)
 
-        # Stratified split
-        X_train, X_test, y_train, y_test = stratified_split(df_x, df_y)
+    # Stratified split
+    X_train, X_test, y_train, y_test = stratified_split(df_x, df_y)
 
-        # Modelling
-        space = {
-            "max_depth": hp.quniform("max_depth", **config.model.max_depth),
-            "gamma": hp.uniform("gamma", **config.model.gamma),
-            "reg_alpha": hp.quniform("reg_alpha", **config.model.reg_alpha),
-            "reg_lambda": hp.uniform("reg_lambda", **config.model.reg_lambda),
-            "colsample_bytree": hp.uniform(
-                "colsample_bytree", **config.model.colsample_bytree
-            ),
-            "min_child_weight": hp.quniform(
-                "min_child_weight", **config.model.min_child_weight
-            ),
-            "n_estimators": config.model.n_estimators,
-            "seed": config.model.seed,
-        }
-        objective = partial(
-            get_objective, X_train, X_test, y_train, y_test, config
-        )
+    # Modelling
+    space = {
+        "max_depth": hp.quniform("max_depth", **config.model.max_depth),
+        "gamma": hp.uniform("gamma", **config.model.gamma),
+        "reg_alpha": hp.quniform("reg_alpha", **config.model.reg_alpha),
+        "reg_lambda": hp.uniform("reg_lambda", **config.model.reg_lambda),
+        "colsample_bytree": hp.uniform(
+            "colsample_bytree", **config.model.colsample_bytree
+        ),
+        "min_child_weight": hp.quniform(
+            "min_child_weight", **config.model.min_child_weight
+        ),
+        "n_estimators": config.model.n_estimators,
+        "seed": config.model.seed,
+    }
+    objective = partial(
+        get_objective, X_train, X_test, y_train, y_test, config
+    )
 
-        # Find best model
-        best_model = optimize(objective, space)
+    # Find best model
+    best_model = optimize(objective, space)
 
-        # Fit the best model
-        best_model.fit(X_train.values, y_train)
+    # Fit the best model
+    best_model.fit(X_train.values, y_train)
 
-        # Predict
-        prediction = predict(best_model, X_test)
-        train_prediction = predict(best_model, X_train)
+    # Predict
+    prediction = predict(best_model, X_test)
+    train_prediction = predict(best_model, X_train)
 
-        accuracy = balanced_accuracy_score(y_test, prediction)
-        f1 = f1_score(y_test, prediction, average="micro")
-        train_accuracy = balanced_accuracy_score(y_train, train_prediction)
-        train_f1 = f1_score(y_train, train_prediction, average="micro")
-        print("Accuracy Score of this model is P{}:".format(accuracy))
-        print("F1 Score of this model is P{}:".format(f1))
+    accuracy = balanced_accuracy_score(y_test, prediction)
+    f1 = f1_score(y_test, prediction, average="micro")
+    train_accuracy = balanced_accuracy_score(y_train, train_prediction)
+    train_f1 = f1_score(y_train, train_prediction, average="micro")
+    print("Accuracy Score of this model is P{}:".format(accuracy))
+    print("F1 Score of this model is P{}:".format(f1))
 
-        # Log parameters and metrics
-        # mlflow.log_param(best_model, config.process.features)
-        # log_params(best_model, features = X_train.columns)
-        mlflow.log_metric("test accuracy_score", accuracy)
-        mlflow.log_metric("test f1 score", f1)
-        mlflow.log_metric("train accuracy_score", train_accuracy)
-        mlflow.log_metric("train f1 score", train_f1)
+    print("Train Accuracy Score of this model is P{}:".format(train_accuracy))
+    print("Train F1 Score of this model is P{}:".format(train_f1))
 
-        mlflow.log_metric("variance threshold", config.parameters.var_thres)
-        mlflow.log_metric("principal_components", config.parameters.var_thres)
+    # Log parameters and metrics
+    # #mlflow.log_param(best_model, config.process.features)
+    # log_params(best_model, features = X_train.columns)
+    #mlflow.log_metric("test accuracy_score", accuracy)
+    #mlflow.log_metric("test f1 score", f1)
+    #mlflow.log_metric("train accuracy_score", train_accuracy)
+    #mlflow.log_metric("train f1 score", train_f1)
 
-        tracking_url_type_store = urlparse(mlflow.get_tracking_uri()).scheme
+    #mlflow.log_metric("variance threshold", config.parameters.var_thres)
+    #mlflow.log_metric("principal_components", config.parameters.var_thres)
 
-        # Model registry does not work with file store
-        if tracking_url_type_store != "file":
+    #tracking_url_type_store = urlparse(#mlflow.get_tracking_uri()).scheme
 
-            mlflow.sklearn.log_model(
-                best_model, "model", registered_model_name="XGBoostModel"
-            )
-        else:
-            mlflow.sklearn.log_model(best_model, "model")
+    # Model registry does not work with file store
+    #if tracking_url_type_store != "file":
 
-        joblib.dump(best_model, abspath(config.model.path))
+        #mlflow.sklearn.log_model(
+            #best_model, "model", registered_model_name="XGBoostModel"
+        #)
+    #else:
+        #mlflow.sklearn.log_model(best_model, "model")
+
+    joblib.dump(best_model, abspath(config.model.path))
 
 
 if __name__ == "__main__":
