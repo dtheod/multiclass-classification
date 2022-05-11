@@ -61,7 +61,6 @@ class DataSelection(BaseEstimator, TransformerMixin):
         X = X.filter(
             [
                 "component_name",
-                "product_name",
                 "resolution_code",
                 "status_code",
                 "quantity_of_votes",
