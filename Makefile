@@ -14,14 +14,12 @@ activate:
 	@echo "Activating virtual environment"
 	poetry shell
 
-setup: initialize_git install
-
 test:
-	pytest
+	pytest --no-header -v  
 
 docs_view:
 	@echo View API documentation... 
-	pdoc src --http localhost:8080
+	pdoc src --http localhost:8787
 
 docs_save:
 	@echo Save documentation to docs... 

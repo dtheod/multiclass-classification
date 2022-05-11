@@ -48,6 +48,24 @@ make install
 make activate
 ```
 
+3. To persist the output of Prefect's flow, run 
+```bash
+export PREFECT__FLOWS__CHECKPOINTING=true
+```
+
+## Run the Project
+To run all flows, type:
+```bash
+python src/feature_main.py
+python src/train_model.py
+```
+
+## Run Tests
+To run all flows, type:
+```bash
+make test
+```
+
 ## Run FastAPI through Docker
 1. Build the Docker Image
 ```bash

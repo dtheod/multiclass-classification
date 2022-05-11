@@ -105,8 +105,8 @@ def feature_variance(
 
 
 @task
-def principal_components(df: pd.DataFrame, pca_path: str) -> PCA:
-    pca = PCA(n_components=5)
+def principal_components(df: pd.DataFrame, pca_path: str, pca_comp:int) -> PCA:
+    pca = PCA(n_components=pca_comp)
     pca.fit(df)
     joblib.dump(pca, abspath(pca_path))
     return pca
@@ -146,7 +146,7 @@ def feature_data(config: DictConfig):
             X, config.parameters.var_thres, config.variance.path
         )
         X, y = oversampling(X, y)
-        pca = principal_components(X, config.pca.path)
+        pca = principal_components(X, config.pca.path, config.pca.components)
         X = apply_principal_components(X, pca)
         df = model_input(X, y)
 

@@ -21,7 +21,7 @@ model_input:
   path: ${model_input.dir}/${model_input.name}
 
 parameters:
-  var_thres: 0.005
+  var_thres: 0.0005
 
 model:
   dir: models
@@ -30,6 +30,7 @@ model:
 
 pca:
   dir: models
+  components: 8
   name: pca
   path: ${pca.dir}/${pca.name}
 

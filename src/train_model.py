@@ -7,11 +7,12 @@ import hydra
 import joblib
 import mlflow
 import mlflow.xgboost
+from urllib.parse import urlparse
 import pandas as pd
 from hydra.utils import to_absolute_path as abspath
 from hyperopt import STATUS_OK, Trials, fmin, hp, tpe
 from omegaconf import DictConfig
-from sklearn.metrics import balanced_accuracy_score
+from sklearn.metrics import balanced_accuracy_score, f1_score
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.preprocessing import LabelEncoder
 from xgboost import XGBClassifier
@@ -82,9 +83,9 @@ def get_objective(
     )
 
     pred = model.predict(df_x_test)
-    acc = balanced_accuracy_score(df_y_test, pred)
-    print("SCORE:", acc)
-    return {"loss": acc, "status": STATUS_OK}
+    f1 = f1_score(df_y_test, pred, average = 'micro')
+    print("SCORE:", f1)
+    return {"loss": f1, "status": STATUS_OK}
 
 
 def optimize(objective: Callable, space: dict):
@@ -98,6 +99,11 @@ def optimize(objective: Callable, space: dict):
     )
     print("The best hyperparameters are : ", "\n")
     print(best_hyper)
+
+    mlflow.log_param("max_depth", best_hyper["max_depth"])
+    mlflow.log_param("colsample_bytree", best_hyper["colsample_bytree"])
+    mlflow.log_param("gamma", best_hyper["gamma"])
+    mlflow.log_param("max_depth", best_hyper["max_depth"])
 
     best_model = XGBClassifier(
         n_estimators=space["n_estimators"],
@@ -114,19 +120,6 @@ def optimize(objective: Callable, space: dict):
 def predict(model: XGBClassifier, X_test: pd.DataFrame):
     return model.predict(X_test)
 
-
-def log_params(model: XGBClassifier, features: list):
-    mlflow.log_params({"model_class": type(model).__name__})
-    model_params = model.get_params()
-
-    for arg, value in model_params.items():
-        mlflow.log_params({arg: value})
-
-    mlflow.log_params({"features": features})
-
-
-def log_metrics(**metrics: dict):
-    mlflow.log_metrics(metrics)
 
 
 @hydra.main(config_path="../config", config_name="main")
@@ -170,14 +163,34 @@ def train_model(config: DictConfig):
 
         # Predict
         prediction = predict(best_model, X_test)
+        train_prediction = predict(best_model, X_train)
 
         accuracy = balanced_accuracy_score(y_test, prediction)
-        print(f"Accuracy Score of this model is {accuracy}.")
+        f1 = f1_score(y_test, prediction, average = 'micro')
+        train_accuracy = balanced_accuracy_score(y_train, train_prediction)
+        train_f1 = f1_score(y_train, train_prediction, average = 'micro')
+        print("Accuracy Score of this model is P{}:".format(accuracy))
+        print("F1 Score of this model is P{}:".format(f1))
 
         # Log parameters and metrics
         # mlflow.log_param(best_model, config.process.features)
         # log_params(best_model, features = X_train.columns)
-        mlflow.log_metric("accuracy_score", accuracy)
+        mlflow.log_metric("test accuracy_score", accuracy)
+        mlflow.log_metric("test f1 score", f1)
+        mlflow.log_metric("train accuracy_score", train_accuracy)
+        mlflow.log_metric("train f1 score", train_f1)
+
+        mlflow.log_metric("variance threshold", config.parameters.var_thres)
+        mlflow.log_metric("principal_components", config.parameters.var_thres)
+
+        tracking_url_type_store = urlparse(mlflow.get_tracking_uri()).scheme
+
+        # Model registry does not work with file store
+        if tracking_url_type_store != "file":
+
+            mlflow.sklearn.log_model(best_model, "model", registered_model_name="XGBoostModel")
+        else:
+            mlflow.sklearn.log_model(best_model, "model")
 
         joblib.dump(best_model, abspath(config.model.path))
 
