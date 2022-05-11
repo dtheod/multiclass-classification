@@ -58,7 +58,7 @@ class DataSelection(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        X = (X.filter(
+        X = X.filter(
             [
                 "component_name",
                 "product_name",
@@ -69,13 +69,12 @@ class DataSelection(BaseEstimator, TransformerMixin):
                 "bug_fix_time",
                 "severity_code",
                 "assignee_name",
-            ])
-            .pipe(
+            ]
+        ).pipe(
             lambda df_: df_.assign(
                 component_name=df_["component_name"].str.lower().str.strip(),
-                assignee_name=df_["assignee_name"].str.lower().str.strip()
+                assignee_name=df_["assignee_name"].str.lower().str.strip(),
             )
-        )
         )
         return X
 
