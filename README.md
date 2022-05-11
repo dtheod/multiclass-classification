@@ -14,9 +14,9 @@
 │   │   ├── model.yaml             # First variation of parameters to train model
 ├── data            
 │   ├── processed                   # data after processing
-│   ├── raw                         # raw data
+│   ├── raw                         # data before pricessing
 │   └── features_data               # data before modelling
-├── docs                            # documentation for your project
+├── docs                            # documentation
 ├── .flake8                         # configuration for flake8 - a Python formatter tool
 ├── .gitignore                      # ignore files that cannot commit to Git
 ├── Makefile                        # store useful commands to set up the environment
@@ -26,7 +26,7 @@
 ├── pyproject.toml                  # dependencies for poetry
 ├── README.md                       # describe your project
 ├── Dockerfile                      # Dockerfile
-├── src                             # store source code
+├── src                             # source code
 │   ├── __init__.py                 # make src a Python module 
 │   ├── process.py                  # process data before training model
 │   └── feature_engineer.py         # create features
@@ -56,7 +56,7 @@ docker build -t testliodocker ./
 2. Run the Docker Image
 ```bash
 docker run -d --name testliodocker2 -p 80:80 testliodocker2
-```bash
+```
 
 3. Test the API-Go to http://127.0.0.1/docs#/default/predict_predict_post
 
