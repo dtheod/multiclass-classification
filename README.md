@@ -44,8 +44,8 @@
 1. Install [Poetry](https://python-poetry.org/docs/#installation)
 2. Set up the environment:
 ```bash
+make install
 make activate
-make setup
 ```
 
 ## Run FastAPI through Docker
@@ -55,7 +55,7 @@ docker build -t testliodocker ./
 ```
 2. Run the Docker Image
 ```bash
-docker run -d --name testliodocker2 -p 80:80 testliodocker2
+docker run -d --name testliodocker -p 80:80 testliodocker
 ```
 
 3. Test the API-Go to http://127.0.0.1/docs#/default/predict_predict_post
