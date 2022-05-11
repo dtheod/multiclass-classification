@@ -78,7 +78,7 @@ def get_objective(
         eval_set=evaluation,
         eval_metric="mlogloss",
         verbose=False,
-        early_stopping_rounds=1,
+        early_stopping_rounds=50,
     )
 
     pred = model.predict(df_x_test)
@@ -93,7 +93,7 @@ def optimize(objective: Callable, space: dict):
         fn=objective,
         space=space,
         algo=tpe.suggest,
-        max_evals=1,
+        max_evals=5,
         trials=trials,
     )
     print("The best hyperparameters are : ", "\n")

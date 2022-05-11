@@ -18,7 +18,7 @@ class CustomFeature(BaseEstimator, TransformerMixin):
 
     def transform(self, X, y=None):
 
-        feat_init = joblib.load("../models/feat")
+        feat_init = joblib.load("/models/feat")
         feat_init = feat_init[
             [
                 "component_name",
@@ -82,7 +82,7 @@ class OneHot(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        onehot = joblib.load("../models/one_hot")
+        onehot = joblib.load("/models/one_hot")
         df_object = X.select_dtypes("object")
         df_nobject = X.select_dtypes(exclude="object").values
         encoded = onehot.transform(df_object)
@@ -98,7 +98,7 @@ class FeatureVariance(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        var = joblib.load("../models/vars")
+        var = joblib.load("/models/vars")
         X = var.transform(X)
         return X
 
@@ -111,7 +111,7 @@ class PCA_Components(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        pca = joblib.load("../models/pca")
+        pca = joblib.load("/models/pca")
         return pca.transform(X)
 
 
@@ -123,7 +123,7 @@ class XGBoosting(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        xgboost_model = joblib.load("../models/XGBoost")
+        xgboost_model = joblib.load("/models/XGBoost")
         return xgboost_model.predict(X)
 
 
@@ -136,28 +136,28 @@ class ReverseEncoder(BaseEstimator, TransformerMixin):
 
     def transform(self, X, y=None):
 
-        label_encoder = joblib.load("../models/label_enc")
+        label_encoder = joblib.load("/models/label_enc")
         return label_encoder.inverse_transform(X)
 
 
 class Project(BaseModel):
-    creation_date: str
-    component_name: str
-    short_description: str
-    long_description: str
-    assignee_name: str
-    reporter_name: str
-    resolution_category: str
-    resolution_code: int
-    status_category: str
-    status_code: int
-    update_date: str
-    quantity_of_votes: int
-    quantity_of_comments: int
-    resolution_date: str
-    bug_fix_time: int
-    severity_category: str
-    severity_code: int
+    creation_date: str = "2015-05-22"
+    component_name: str = "core"
+    short_description: str = "LogTraceException in ProposalUtils.toMethodNam"
+    long_description: str = "The following incident was reported via the au"
+    assignee_name: str = "recommenders-inbox"
+    reporter_name: str = "error-reports-inbox"
+    resolution_category: str = "fixed"
+    resolution_code: int = 1
+    status_category: str = "closed"
+    status_code: int = 6
+    update_date: str = "2015-05-27"
+    quantity_of_votes: int = 0
+    quantity_of_comments: int = 2
+    resolution_date: str = "2015-05-27"
+    bug_fix_time: int = 5
+    severity_category: str = "normal"
+    severity_code: int = 2
 
 
 @app.post("/predict")

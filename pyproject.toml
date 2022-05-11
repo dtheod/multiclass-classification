@@ -35,6 +35,8 @@ pytest = "^6.2.5"
 pre-commit = "^2.17.0"
 plotly = "^5.7.0"
 matplotlib = "^3.5.2"
+pytest-steps = "^1.8.0"
+pandera = "^0.11.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

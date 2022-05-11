@@ -14,12 +14,6 @@ activate:
 	@echo "Activating virtual environment"
 	poetry shell
 
-initialize_git:
-	git init 
-
-pull_data:
-	poetry run dvc pull
-
 setup: initialize_git install
 
 test:

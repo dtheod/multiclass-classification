@@ -25,4 +25,4 @@ seed: 0
 use_label_encoder: False
 objective: "multi:softmax"
 eval_metric: mlogloss
-early_stopping_rounds: 10
+early_stopping_rounds: 30
