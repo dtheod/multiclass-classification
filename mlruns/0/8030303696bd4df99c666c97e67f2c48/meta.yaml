@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/dtheod/Projects/multiclass-classification/mlruns/0/8030303696bd4df99c666c97e67f2c48/artifacts
+end_time: 1652272891292
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+name: ''
+run_id: 8030303696bd4df99c666c97e67f2c48
+run_uuid: 8030303696bd4df99c666c97e67f2c48
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1652272429132
+status: 3
+tags: []
+user_id: dtheod
