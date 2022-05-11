@@ -105,7 +105,9 @@ def feature_variance(
 
 
 @task
-def principal_components(df: pd.DataFrame, pca_path: str, pca_comp:int) -> PCA:
+def principal_components(
+    df: pd.DataFrame, pca_path: str, pca_comp: int
+) -> PCA:
     pca = PCA(n_components=pca_comp)
     pca.fit(df)
     joblib.dump(pca, abspath(pca_path))

@@ -58,7 +58,7 @@ class DataSelection(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        X = X.filter(
+        X = (X.filter(
             [
                 "component_name",
                 "product_name",
@@ -69,7 +69,13 @@ class DataSelection(BaseEstimator, TransformerMixin):
                 "bug_fix_time",
                 "severity_code",
                 "assignee_name",
-            ]
+            ])
+            .pipe(
+            lambda df_: df_.assign(
+                component_name=df_["component_name"].str.lower().str.strip(),
+                assignee_name=df_["assignee_name"].str.lower().str.strip()
+            )
+        )
         )
         return X
 
@@ -142,20 +148,20 @@ class ReverseEncoder(BaseEstimator, TransformerMixin):
 
 class Project(BaseModel):
     creation_date: str = "2015-05-22"
-    component_name: str = "core"
+    component_name: str = "engine"
     short_description: str = "LogTraceException in ProposalUtils.toMethodNam"
     long_description: str = "The following incident was reported via the au"
-    assignee_name: str = "recommenders-inbox"
+    assignee_name: str = "serg.boyko2011"
     reporter_name: str = "error-reports-inbox"
     resolution_category: str = "fixed"
     resolution_code: int = 1
     status_category: str = "closed"
-    status_code: int = 6
+    status_code: int = 4
     update_date: str = "2015-05-27"
     quantity_of_votes: int = 0
-    quantity_of_comments: int = 2
+    quantity_of_comments: int = 8
     resolution_date: str = "2015-05-27"
-    bug_fix_time: int = 5
+    bug_fix_time: int = 2
     severity_category: str = "normal"
     severity_code: int = 2
 

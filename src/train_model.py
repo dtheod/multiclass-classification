@@ -2,12 +2,12 @@
 import warnings
 from functools import partial
 from typing import Callable, Tuple
+from urllib.parse import urlparse
 
 import hydra
 import joblib
 import mlflow
 import mlflow.xgboost
-from urllib.parse import urlparse
 import pandas as pd
 from hydra.utils import to_absolute_path as abspath
 from hyperopt import STATUS_OK, Trials, fmin, hp, tpe
@@ -83,7 +83,7 @@ def get_objective(
     )
 
     pred = model.predict(df_x_test)
-    f1 = f1_score(df_y_test, pred, average = 'micro')
+    f1 = f1_score(df_y_test, pred, average="micro")
     print("SCORE:", f1)
     return {"loss": f1, "status": STATUS_OK}
 
@@ -119,7 +119,6 @@ def optimize(objective: Callable, space: dict):
 
 def predict(model: XGBClassifier, X_test: pd.DataFrame):
     return model.predict(X_test)
-
 
 
 @hydra.main(config_path="../config", config_name="main")
@@ -166,9 +165,9 @@ def train_model(config: DictConfig):
         train_prediction = predict(best_model, X_train)
 
         accuracy = balanced_accuracy_score(y_test, prediction)
-        f1 = f1_score(y_test, prediction, average = 'micro')
+        f1 = f1_score(y_test, prediction, average="micro")
         train_accuracy = balanced_accuracy_score(y_train, train_prediction)
-        train_f1 = f1_score(y_train, train_prediction, average = 'micro')
+        train_f1 = f1_score(y_train, train_prediction, average="micro")
         print("Accuracy Score of this model is P{}:".format(accuracy))
         print("F1 Score of this model is P{}:".format(f1))
 
@@ -188,7 +187,9 @@ def train_model(config: DictConfig):
         # Model registry does not work with file store
         if tracking_url_type_store != "file":
 
-            mlflow.sklearn.log_model(best_model, "model", registered_model_name="XGBoostModel")
+            mlflow.sklearn.log_model(
+                best_model, "model", registered_model_name="XGBoostModel"
+            )
         else:
             mlflow.sklearn.log_model(best_model, "model")
 
